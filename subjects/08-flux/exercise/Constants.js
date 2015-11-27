@@ -1,16 +1,15 @@
-var keyMirror = require('react/lib/keyMirror');
+import keyMirror from 'key-mirror'
 
-module.exports = {
-  //API: 'http://localhost:3000',
-  API: 'http://addressbook-api.herokuapp.com',
+export default {
 
   ActionTypes: keyMirror({
-    CONTACTS_LOADED: null,
-    LOAD_CONTACTS: null
+    LOAD_CONTACTS: null,
+    CONTACTS_WERE_LOADED: null
   }),
 
   PayloadSources: keyMirror({
     SERVER_ACTION: null,
     VIEW_ACTION: null
   })
-};
+
+}

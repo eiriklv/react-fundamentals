@@ -1,42 +1,60 @@
-var React = require('react');
-var styles = require('./lib/styles');
-var data = require('./lib/data');
+////////////////////////////////////////////////////////////////////////////////
+// Exercise:
+//
+// Make tabs a "pure component" by not managing any of its own state, instead
+// add a property to tell it which tab to show, and then have it communicate
+// with its owner to get rerendered with a new active tab.
+//
+// Why would you move that state up? you might have a workflow where they can't
+// progress from one step to the next until they've completed some sort of task
+// but they can go back if they'd like. If the tabs keep their own state you
+// can't control them with your application logic.
+//
+// Already done?
+//
+// Make a `StatefulTabs` component that manages some state that is passes as
+// props down to `Tabs` (since they should now be stateless)
+////////////////////////////////////////////////////////////////////////////////
+import React from 'react'
+import { render } from 'react-dom'
+import * as styles from './lib/styles'
+import data from './lib/data'
 
-var Tabs = React.createClass({
+const Tabs = React.createClass({
 
   propTypes: {
-    data: React.PropTypes.array.isRequired,
-    activeTabIndex: React.PropTypes.number.isRequired,
-    onActivateTab: React.PropTypes.func.isRequired,
+    data: React.PropTypes.array.isRequired
   },
 
-  handleTabClick (activeTabIndex) {
-    this.props.onActivateTab(activeTabIndex);
+  handleTabClick(activeTabIndex) {
+    this.props.onActivate(activeTabIndex)
   },
 
-  renderTabs () {
+  renderTabs() {
     return this.props.data.map((tab, index) => {
-      var style = this.props.activeTabIndex === index ?
-        styles.activeTab : styles.tab;
-      var clickHandler = this.handleTabClick.bind(this, index);
+      const style = this.props.activeTabIndex === index ?
+        styles.activeTab : styles.tab
       return (
-        <div className="Tab" key={tab.name} style={style} onClick={clickHandler}>
-          {tab.name}
-        </div>
-      );
-    });
+        <div
+          className="Tab"
+          key={tab.name}
+          style={style}
+          onClick={() => this.handleTabClick(index)}
+        >{tab.name}</div>
+      )
+    })
   },
 
-  renderPanel () {
-    var tab = this.props.data[this.props.activeTabIndex];
+  renderPanel() {
+    const tab = this.props.data[this.props.activeTabIndex]
     return (
       <div>
         <p>{tab.description}</p>
       </div>
-    );
+    )
   },
 
-  render () {
+  render() {
     return (
       <div style={styles.app}>
         <div style={styles.tabs}>
@@ -46,39 +64,35 @@ var Tabs = React.createClass({
           {this.renderPanel()}
         </div>
       </div>
-    );
+    )
   }
-});
 
-var App = React.createClass({
-  getInitialState () {
+})
+
+const App = React.createClass({
+
+  getInitialState() {
     return {
       activeTabIndex: 0
-    };
+    }
   },
 
-  handleActivateTab (activeTabIndex) {
-    this.setState({ activeTabIndex });
-  },
-
-  render () {
+  render() {
     return (
       <div>
         <h1>Props v. State</h1>
         <Tabs
+          activeTabIndex={this.state.activeTabIndex}
+          onActivate={(activeTabIndex) => this.setState({ activeTabIndex })}
           ref="tabs"
           data={this.props.tabs}
-          activeTabIndex={this.state.activeTabIndex}
-          onActivateTab={this.handleActivateTab}
         />
       </div>
-    );
+    )
   }
-});
 
-var component = React.render(<App tabs={data}/>, document.getElementById('app'), () => {
-  setTimeout(() => {
-    require('./tests').run(component);
-  }, 0);
-});
+})
 
+render(<App tabs={data} />, document.getElementById('app'), function () {
+  require('./tests').run(this)
+})

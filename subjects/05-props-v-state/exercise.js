@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Exercise:
 //
-// make tabs a "pure component" by not managing any of its own state, instead
+// Make tabs a "pure component" by not managing any of its own state, instead
 // add a property to tell it which tab to show, and then have it communicate
 // with its owner to get rerendered with a new active tab.
 //
@@ -12,53 +12,55 @@
 //
 // Already done?
 //
-// Now put state back into the tabs (so that they can be used w/o a the owner
-// being required to manage state) and synchronize the state between the App
-// and Tabs.
+// Make a `StatefulTabs` component that manages some state that is passes as
+// props down to `Tabs` (since they should now be stateless)
 ////////////////////////////////////////////////////////////////////////////////
-var React = require('react');
-var styles = require('./lib/styles');
-var data = require('./lib/data');
+import React from 'react'
+import { render } from 'react-dom'
+import * as styles from './lib/styles'
+import data from './lib/data'
 
-var Tabs = React.createClass({
+const Tabs = React.createClass({
 
   propTypes: {
     data: React.PropTypes.array.isRequired
   },
 
-  getInitialState () {
+  getInitialState() {
     return {
       activeTabIndex: 0
-    };
+    }
   },
 
-  handleTabClick (activeTabIndex) {
-    this.setState({ activeTabIndex });
+  handleTabClick(activeTabIndex) {
+    this.setState({ activeTabIndex })
   },
 
-  renderTabs () {
+  renderTabs() {
     return this.props.data.map((tab, index) => {
-      var style = this.state.activeTabIndex === index ?
-        styles.activeTab : styles.tab;
-      var clickHandler = this.handleTabClick.bind(this, index);
+      const style = this.state.activeTabIndex === index ?
+        styles.activeTab : styles.tab
       return (
-        <div className="Tab" key={tab.name} style={style} onClick={clickHandler}>
-          {tab.name}
-        </div>
-      );
-    });
+        <div
+          className="Tab"
+          key={tab.name}
+          style={style}
+          onClick={() => this.handleTabClick(index)}
+        >{tab.name}</div>
+      )
+    })
   },
 
-  renderPanel () {
-    var tab = this.props.data[this.state.activeTabIndex];
+  renderPanel() {
+    const tab = this.props.data[this.state.activeTabIndex]
     return (
       <div>
         <p>{tab.description}</p>
       </div>
-    );
+    )
   },
 
-  render () {
+  render() {
     return (
       <div style={styles.app}>
         <div style={styles.tabs}>
@@ -68,26 +70,24 @@ var Tabs = React.createClass({
           {this.renderPanel()}
         </div>
       </div>
-    );
+    )
   }
-});
 
-var App = React.createClass({
-  render () {
+})
+
+const App = React.createClass({
+
+  render() {
     return (
       <div>
         <h1>Props v. State</h1>
-        <Tabs ref="tabs" data={this.props.tabs}/>
+        <Tabs ref="tabs" data={this.props.tabs} />
       </div>
-    );
+    )
   }
-});
 
-var assert = require('../shared/assert');
+})
 
-var component = React.render(<App tabs={data}/>, document.getElementById('app'), () => {
-  setTimeout(() => {
-    require('./tests').run(component);
-  }, 0);
-});
-
+render(<App tabs={data} />, document.getElementById('app'), function () {
+  require('./tests').run(this)
+})

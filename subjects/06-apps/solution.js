@@ -1,148 +1,244 @@
 var React = require('react');
-var assign = require('object-assign');
+var sortBy = require('sort-by');
 var escapeRegExp = require('./utils/escapeRegExp');
+var { login, sendMessage, subscribeToChannels, subscribeToMessages } = require('./utils/ChatUtils');
 
-var CATALOG = [
-  {
-    categoryName: 'Sporting Goods',
-    products: [
-      { id: 1, name: 'Basketball', price: 4000, quantity: 0 },
-      { id: 2, name: 'Boxing Gloves', price: 3500, quantity: 3 },
-      { id: 3, name: 'Baseball', price: 1000, quantity: 0 }
-    ]
-  },
-  {
-    categoryName: 'Pets',
-    products: [
-      { id: 4, name: 'Gerbil', price: 500, quantity: 0 },
-      { id: 5, name: 'Goldfish', price: 300, quantity: 3 },
-      { id: 6, name: 'Parakeet', price: 2000, quantity: 2 }
-    ]
-  }
-];
+require('./styles');
 
-var cellStyle = {
-  padding: 10
-};
+var { arrayOf, shape, string, number, object, func, bool } = React.PropTypes;
 
-var headerCellStyle = assign({}, cellStyle, {
-  textAlign: 'left'
+var message = shape({
+  timestamp: number.isRequired,
+  username: string.isRequired,
+  text: string.isRequired
 });
 
-var PropTypes = {
-  product: React.PropTypes.shape({
-    name: React.PropTypes.string,
-    price: React.PropTypes.number,
-    quantity: React.PropTypes.number
-  })
-};
+var MessageListItem = React.createClass({
 
-PropTypes.productCategory = React.PropTypes.shape({
-  categoryName: React.PropTypes.string,
-  products: React.PropTypes.arrayOf(PropTypes.product)
-});
-
-PropTypes.productCatalog = React.PropTypes.arrayOf(PropTypes.productCategory);
-
-var CategoryRow = React.createClass({
   propTypes: {
-    productCategory: PropTypes.productCategory
+    authoredByViewer: bool.isRequired,
+    message: message.isRequired,
+    avatar: string
   },
-  render() {
-    return (
-      <tr>
-        <th colSpan="2" style={{textAlign: 'left', padding: 10}}>
-          {this.props.productCategory.categoryName}
-        </th>
-      </tr>
-    );
-  }
-});
 
-var ProductRow = React.createClass({
-  propTypes: {
-    product: PropTypes.product
-  },
   render() {
-    var { name, price } = this.props.product;
+    var { authoredByViewer, message } = this.props;
+    var className = 'message';
+
+    if (authoredByViewer)
+      className += ' own-message';
 
     return (
-      <tr>
-        <td style={{padding: 10}}>{name}</td>
-        <td style={{padding: 10}}>${price/100}</td>
-      </tr>
+      <li className={className}>
+        <div className="message-avatar">
+          <img src={message.avatar} width="40" />
+        </div>
+        <div className="message-content">
+          <div className="message-username">
+            {message.username}
+          </div>
+          <div className="message-text">{message.text}</div>
+        </div>
+      </li>
     );
   }
+
 });
 
-var FilterableProductTable = React.createClass({
+var MessageList = React.createClass({
+
   propTypes: {
-    productCatalog: PropTypes.productCatalog,
-    filterBy: React.PropTypes.string
+    auth: object.isRequired,
+    messages: arrayOf(message).isRequired
   },
-  getDefaultProps() {
-    return {
-      filterBy: ''
-    };
-  },
+
   render() {
-    var matcher = new RegExp(escapeRegExp(this.props.filterBy), 'i');
+    var { auth, messages } = this.props;
 
-    var rows = [];
-
-    this.props.productCatalog.forEach(function (productCategory) {
-      var productRows = [];
-
-      productCategory.products.forEach(function (product) {
-        if (matcher.test(product.name))
-          productRows.push(<ProductRow key={product.id} product={product}/>);
-      });
-
-      if (productRows.length)
-        rows.push(<CategoryRow key={productCategory.categoryName} productCategory={productCategory}/>);
-
-      rows = rows.concat(productRows);
+    var viewerUsername = auth.github.username;
+    var items = messages.sort(sortBy('timestamp')).map((message, index) => {
+      return <MessageListItem
+        key={index}
+        authoredByViewer={message.username === viewerUsername}
+        message={message}
+      />;
     });
 
     return (
-      <table>
-        <tbody>
-          {rows}
-        </tbody>
-      </table>
+      <ol className="message-list">
+        {items}
+      </ol>
     );
   }
+
 });
 
-var ProductCatalog = React.createClass({
-  propTypes: {
-    productCatalog: PropTypes.productCatalog
-  },
+var HiddenSubmitButton = React.createClass({
+
+  render() {
+    var style = {
+      position: 'absolute',
+      left: -9999,
+      width: 1,
+      height: 1
+    };
+
+    return (
+      <input type="submit" style={style} tabIndex="-1" />
+    );
+  }
+
+});
+
+var ChannelList = React.createClass({
+
   getInitialState() {
     return {
-      searchQuery: ''
+      channels: []
     };
   },
-  handleQueryChange(event) {
-    this.setState({
-      searchQuery: event.target.value
+
+  componentDidMount() {
+    subscribeToChannels((channels) => {
+      this.setState({ channels });
     });
   },
+
   render() {
+    var defaultChannels = [{ _key: 'general' }];
+    var channels = this.state.channels.length ?
+      this.state.channels : defaultChannels;
     return (
-      <div>
-        <h2>Product Catalog</h2>
-        <input type="search" placeholder="search" onChange={this.handleQueryChange} value={this.state.searchQuery}/>
-        <br/>
-        <div>
-          <FilterableProductTable productCatalog={this.props.productCatalog} filterBy={this.state.searchQuery}/>
-        </div>
+      <div className="channels">
+        <ul>
+          {channels.map(channel => (
+            <li key={channel._key}>
+              <Link to={"/"+channel._key}>{channel._key}</Link>
+            </li>
+          ))}
+        </ul>
       </div>
     );
   }
+
 });
 
-React.render(
-  <ProductCatalog productCatalog={CATALOG}/>,
-  document.getElementById('app')
-);
+var Chat = React.createClass({
+
+  getInitialState() {
+    return {
+      auth: null,
+      channels: null
+    };
+  },
+
+  componentDidMount() {
+    login((error, auth) => {
+      if (error) {
+        console.log(error);
+      } else {
+        this.setState({ auth });
+      }
+    });
+  },
+
+  render() {
+    var { auth } = this.state;
+
+    if (auth == null)
+      return <p>Logging in...</p>;
+
+    return (
+      <div className="chat">
+        <Room auth={auth} />
+      </div>
+    );
+  }
+
+});
+
+var Room = React.createClass({
+
+  propTypes: {
+    auth: React.PropTypes.object
+  },
+
+  getInitialState() {
+    return {
+      messages: []
+    };
+  },
+
+  componentWillMount() {
+    this.unsubscribe = null;
+    this.pinToBottom = true;
+  },
+
+  componentDidMount() {
+    this.subscribeToMessages('general');
+  },
+
+  componentWillReceiveProps(nextProps) {
+    this.subscribeToMessages(nextProps.params.room);
+  },
+
+  subscribeToMessages(room) {
+    if (this.unsubscribe)
+      this.unsubscribe();
+
+    this.unsubscribe = subscribeToMessages(room, (messages) => {
+      this.setState({ messages });
+    });
+  },
+
+  handleSubmit(event) {
+    event.preventDefault();
+
+    var messageTextNode = React.findDOMNode(this.refs.messageText);
+    var messageText = messageTextNode.value;
+    messageTextNode.value = '';
+
+    var username = this.props.auth.github.username;
+    var avatar = this.props.auth.github.profileImageURL;
+
+    this.pinToBottom = true;
+    sendMessage('general', username, avatar, messageText);
+  },
+
+  handleScroll(event) {
+    var node = event.target;
+    var { clientHeight, scrollTop, scrollHeight } = node;
+
+    this.pinToBottom = clientHeight + scrollTop > (scrollHeight - 10);
+  },
+
+  componentDidUpdate() {
+    var node = React.findDOMNode(this.refs.messages);
+
+    if (node && this.pinToBottom)
+      node.scrollTop = node.scrollHeight;
+  },
+
+  render() {
+    var { auth } = this.props;
+    var { messages } = this.state;
+
+    return (
+      <div className="room">
+        <h1 className="room-title">general</h1>
+        <div ref="messages" className="messages" onScroll={this.handleScroll}>
+          <MessageList auth={auth} messages={messages} />
+        </div>
+        <form className="new-message-form" onSubmit={this.handleSubmit}>
+          <div className="new-message">
+            <input ref="messageText" type="text" placeholder="Type your message here..." />
+            <HiddenSubmitButton />
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+});
+
+React.render(<Chat />, document.getElementById('app'));

@@ -1,23 +1,21 @@
-var assign = require('object-assign');
-var styles = {};
+export const app = {}
 
-styles.tab = {
+export const tabs = {}
+
+export const tab = {
   display: 'inline-block',
   padding: 10,
   margin: 10,
   borderBottom: '4px solid',
   borderBottomColor: '#ccc',
   cursor: 'pointer'
-};
+}
 
-styles.activeTab = assign({}, styles.tab, {
+export const activeTab = {
+  ...tab,
   borderBottomColor: '#000'
-});
+}
 
-styles.tabPanels = {
+export const tabPanels = {
   padding: 10
-};
-
-module.exports = styles;
-
-
+}

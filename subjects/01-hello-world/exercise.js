@@ -4,12 +4,11 @@
 // - change the contents of the render function and save the file
 // - see the updates automatically in your browser without refreshing!
 ////////////////////////////////////////////////////////////////////////////////
-var React = require('react');
+import React from 'react'
+import ReactDOM from 'react-dom'
 
-var App = React.createClass({
-  render: function () {
-    return <div>Hello World</div>;
-  }
-});
+function App() {
+  return <div>Hello world!</div>
+}
 
-React.render(<App/>, document.getElementById('app'));
+ReactDOM.render(<App />, document.getElementById('app'))

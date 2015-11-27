@@ -1,22 +1,29 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Exercise:
 //
-// - render the data as tabs, with their `name` as the label in the tab
+// - Render the data as tabs, with their `name` as the label in the tab
 //   and their `description` inside the tab panel
-// - make it so that you can click a tab label and the panel renders
+// - Make it so that you can click a tab label and the panel renders
 //   the correct content
-// - make sure the active tab has the active styles
+// - Make sure the active tab has the active styles
 ////////////////////////////////////////////////////////////////////////////////
-var React = require('react');
-var assign = require('object-assign');
+import React from 'react'
+import { render } from 'react-dom'
 
-var DATA = [
-  { id: 1, name: 'USA', description: 'Land of the Free, Home of the brave' },
-  { id: 2, name: 'Brazil', description: 'Sunshine, beaches, and Carnival' },
-  { id: 3, name: 'Russia', description: 'World Cup 2018!' },
-];
+const { arrayOf, string, number, shape } = React.PropTypes
 
-var styles = {};
+const tab = shape({
+  label: string.isRequired,
+  content: string.isRequired
+})
+
+const country = shape({
+  id: number.isRequired,
+  name: string.isRequired,
+  description: string.isRequired
+})
+
+const styles = {}
 
 styles.tab = {
   display: 'inline-block',
@@ -25,63 +32,88 @@ styles.tab = {
   borderBottom: '4px solid',
   borderBottomColor: '#ccc',
   cursor: 'pointer'
-};
+}
 
-styles.activeTab = assign({}, styles.tab, {
+styles.activeTab = {
+  ...styles.tab,
   borderBottomColor: '#000'
-});
+}
 
 styles.panel = {
   padding: 10
-};
+}
 
-var Tabs = React.createClass({
+const Tabs = React.createClass({
   propTypes: {
-    data: React.PropTypes.array
+    data: arrayOf(tab)
   },
-
   getInitialState() {
     return {
       activeTabIndex: 0
-    };
+    }
   },
-
-  handleClick(clickedIndex, event) {
-    event.stopPropagation();
+  selectTabIndex(activeTabIndex) {
     this.setState({
-      activeTabIndex: clickedIndex
-    });
+      activeTabIndex
+    })
   },
-
   render() {
-    var activeTab = this.props.data[this.state.activeTabIndex];
+    const { data } = this.props
+    const { activeTabIndex } = this.state
+
+    const tabs = data.map((tab, index) => {
+      const isActive = index === activeTabIndex
+      const style = isActive ? styles.activeTab : styles.tab
+
+      return (
+        <div
+          key={tab.label}
+          className="Tab"
+          style={style}
+          onClick={() => this.selectTabIndex(index)}
+        >{tab.label}</div>
+      )
+    })
+
+    const activeTab = data[activeTabIndex]
+    const content = activeTab && activeTab.content
 
     return (
       <div className="Tabs">
-        {this.props.data.map((d, i) => (
-          <div key={d.id} className="Tab" onClick={this.handleClick.bind(this, i)} style={i == this.state.activeTabIndex ? styles.activeTab : styles.tab}>
-            {d.name}
-          </div>
-        ))}
-        <div className="TabPanels" style={styles.panel}>
-          {activeTab.description}
+        {tabs}
+        <div className="TabPanel" style={styles.panel}>
+          {content}
         </div>
       </div>
-    );
+    )
   }
-});
+})
 
-var App = React.createClass({
-  render () {
+const App = React.createClass({
+  propTypes: {
+    countries: arrayOf(country).isRequired
+  },
+  render() {
+    const data = this.props.countries.map(country => ({
+      label: country.name,
+      content: country.description
+    }))
+
     return (
       <div>
         <h1>Countries</h1>
-        <Tabs data={this.props.countries}/>
+        <Tabs data={data} />
       </div>
-    );
+    )
   }
-});
+})
 
-React.render(<App countries={DATA}/>, document.getElementById('app'), () => {
-  require('./tests').run();
-});
+const DATA = [
+  { id: 1, name: 'USA', description: 'Land of the Free, Home of the brave' },
+  { id: 2, name: 'Brazil', description: 'Sunshine, beaches, and Carnival' },
+  { id: 3, name: 'Russia', description: 'World Cup 2018!' }
+]
+
+render(<App countries={DATA} />, document.getElementById('app'), function () {
+  require('./tests').run(this)
+})

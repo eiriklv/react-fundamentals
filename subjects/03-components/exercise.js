@@ -1,22 +1,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Exercise:
 //
-// - render the data as tabs, with their `name` as the label in the tab
+// - Render the data as tabs, with their `name` as the label in the tab
 //   and their `description` inside the tab panel
-// - make it so that you can click a tab label and the panel renders
+// - Make it so that you can click a tab label and the panel renders
 //   the correct content
-// - make sure the active tab has the active styles
+// - Make sure the active tab has the active styles
 ////////////////////////////////////////////////////////////////////////////////
-var React = require('react');
-var assign = require('object-assign');
+import React from 'react'
+import { render } from 'react-dom'
 
-var DATA = [
-  { id: 1, name: 'USA', description: 'Land of the Free, Home of the brave' },
-  { id: 2, name: 'Brazil', description: 'Sunshine, beaches, and Carnival' },
-  { id: 3, name: 'Russia', description: 'World Cup 2018!' },
-];
-
-var styles = {};
+const styles = {}
 
 styles.tab = {
   display: 'inline-block',
@@ -25,45 +19,52 @@ styles.tab = {
   borderBottom: '4px solid',
   borderBottomColor: '#ccc',
   cursor: 'pointer'
-};
+}
 
-styles.activeTab = assign({}, styles.tab, {
+styles.activeTab = {
+  ...styles.tab,
   borderBottomColor: '#000'
-});
+}
 
 styles.panel = {
   padding: 10
-};
+}
 
-var Tabs = React.createClass({
-  render () {
+const Tabs = React.createClass({
+  render() {
     return (
       <div className="Tabs">
-        <div className="Tab" style={styles.tab}>
-          Inactive
-        </div>
         <div className="Tab" style={styles.activeTab}>
           Active
         </div>
-        <div className="TabPanels" style={styles.panel}>
+        <div className="Tab" style={styles.tab}>
+          Inactive
+        </div>
+        <div className="TabPanel" style={styles.panel}>
           Panel
         </div>
       </div>
-    );
+    )
   }
-});
+})
 
-var App = React.createClass({
-  render () {
+const App = React.createClass({
+  render() {
     return (
       <div>
         <h1>Countries</h1>
-        <Tabs data={this.props.countries}/>
+        <Tabs data={this.props.countries} />
       </div>
-    );
+    )
   }
-});
+})
 
-React.render(<App countries={DATA}/>, document.getElementById('app'), function () {
-  require('./tests').run();
-});
+const DATA = [
+  { id: 1, name: 'USA', description: 'Land of the Free, Home of the brave' },
+  { id: 2, name: 'Brazil', description: 'Sunshine, beaches, and Carnival' },
+  { id: 3, name: 'Russia', description: 'World Cup 2018!' }
+]
+
+render(<App countries={DATA} />, document.getElementById('app'), function () {
+  require('./tests').run(this)
+})

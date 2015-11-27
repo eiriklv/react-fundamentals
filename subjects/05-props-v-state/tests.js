@@ -1,31 +1,32 @@
-var assert = require('../shared/assert');
-var React = require('react/addons');
-var { click } = React.addons.TestUtils.Simulate;
+import React from 'react'
+import ReactDOM from 'react-dom'
+import { Simulate } from 'react-addons-test-utils'
+import assert from '../assert'
 
-exports.run = (component) => {
-  var tabs = document.querySelectorAll('.Tab');
+export function run(component) {
+  const node = ReactDOM.findDOMNode(component)
+  const tabs = node.querySelectorAll('.Tab')
+
   assert(
     component.refs.tabs.state == null,
     'Tabs should not have state'
-  );
+  )
 
-  click(tabs[1]);
+  Simulate.click(tabs[1])
   assert(
-    component.getDOMNode().innerHTML.match(/STEP TWO/) != null,
+    node.innerHTML.match(/STEP TWO/) != null,
     'clicking changes tabs'
-  );
+  )
 
-  click(tabs[2]);
+  Simulate.click(tabs[2])
   assert(
-    component.getDOMNode().innerHTML.match(/STEP THREE/) != null,
+    node.innerHTML.match(/STEP THREE/) != null,
     'clicking changes tabs'
-  );
+  )
 
-  click(tabs[0]);
+  Simulate.click(tabs[0])
   assert(
-    component.getDOMNode().innerHTML.match(/STEP ONE/) != null,
+    node.innerHTML.match(/STEP ONE/) != null,
     'clicking changes tabs'
-  );
-};
-
-
+  )
+}
